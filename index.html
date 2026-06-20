@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>💕 Polaroid Memories</title>
+
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:'Segoe UI',sans-serif;
+  background:linear-gradient(
+    180deg,
+    #fff0f5 0%,    /* soft pink */
+    #ffe8f1 35%,   /* pink sangat muda */
+    #f7f9ff 55%,   /* netral putih dingin (penyangga) */
+    #e6f0ff 75%,   /* biru pastel */
+    #d9e8ff 100%   /* biru lembut */
+  );
+  min-height:100vh;
+}
+
+/* HEADER */
+header{
+  text-align:center;
+  padding:18px;
+}
+header h2{
+  margin:0;
+  color:#ff4f8b;
+  font-weight:600;
+}
+header p{
+  margin-top:6px;
+  font-size:14px;
+  color:#777;
+}
+
+/* GALLERY */
+.gallery{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
+  gap:22px;
+  padding:18px;
+}
+
+/* POLAROID */
+.polaroid{
+  background:#fff;
+  padding:10px 10px 34px;
+  border-radius:6px;
+  box-shadow:0 10px 25px rgba(255,79,139,.3);
+  position:relative;
+  opacity:0;
+  animation:fadeUp .6s forwards;
+  transition:.35s ease;
+}
+.polaroid:hover{
+  transform:translateY(-12px) scale(1.04) rotate(0deg) !important;
+  box-shadow:0 20px 45px rgba(255,79,139,.45);
+}
+
+/* IMAGE */
+.polaroid img{
+  width:100%;
+  height:165px;
+  object-fit:cover;
+  border-radius:4px;
+  cursor:pointer;
+}
+
+/* CAPTION */
+.caption{
+  margin-top:10px;
+  text-align:center;
+  font-size:14px;
+  color:#666;
+}
+@keyframes fadeUp{
+  from{opacity:0; translate:0 25px;}
+  to{opacity:1; translate:0 0;}
+}
+
+/* FULLSCREEN */
+#viewer{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.92);
+  display:none;
+  justify-content:center;
+  align-items:center;
+  z-index:99;
+}
+#viewer img{
+  max-width:92%;
+  max-height:92%;
+  border-radius:14px;
+  animation:zoom .35s ease;
+}
+@keyframes zoom{
+  from{transform:scale(.8);opacity:0}
+  to{transform:scale(1);opacity:1}
+}
+
+/* MOBILE */
+@media(max-width:600px){
+  .gallery{gap:16px}
+  .polaroid img{height:150px}
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h2>💕 Pieces of Us 💕</h2>
+  <p>Kumpulan Foto Kita</p>
+</header>
+
+<div class="gallery" id="gallery"></div>
+
+<div id="viewer">
+  <img id="viewerImg">
+</div>
+
+<script>
+/* FOTO DARI KODE */
+const photos = [
+  { image:'foto1.jpg' },
+  { image:'foto2.jpg' },
+  { image:'foto3.jpg' },
+  { image:'foto4.jpg', caption:'' },
+  { image:'foto5.jpg' },
+  { image:'foto20.jpg' },
+  { image:'foto6.jpg' },
+  { image:'foto7.jpg'},
+  { image:'foto8.jpg' },
+  { image:'foto9.jpg' },
+  { image:'foto10.jpg' },
+  { image:'foto11.jpg' },
+  { image:'foto12.jpg' },
+  { image:'foto13.jpg' },
+  { image:'foto14.jpg' },
+  { image:'foto15.jpg' },
+  { image:'foto16.jpg' },
+  { image:'foto17.jpg' },
+  { image:'foto18.jpg' },
+  { image:'foto19.jpg' }
+];
+
+const gallery = document.getElementById('gallery');
+const viewer = document.getElementById('viewer');
+const viewerImg = document.getElementById('viewerImg');
+
+let currentIndex = 0;
+let slideshowInterval = null;
+
+/* RENDER */
+photos.forEach((p,i)=>{
+  const card=document.createElement('div');
+  card.className='polaroid';
+
+  // RANDOM ROTATION (-6 s/d +6 derajat)
+  const rotate = (Math.random()*12 - 6).toFixed(2);
+  card.style.transform = `rotate(${rotate}deg) translateY(25px)`;
+  card.style.animationDelay = `${i*0.12}s`;
+
+  card.innerHTML=`
+    <img src="${p.image}" onclick="openView(${i})">
+    ${p.caption ? `<div class="caption">${p.caption}</div>` : ``}
+  `;
+  gallery.appendChild(card);
+});
+
+/* FULLSCREEN + SLIDESHOW */
+function openView(index){
+  currentIndex = index;
+  viewerImg.src = photos[currentIndex].image;
+  viewer.style.display='flex';
+  startSlideshow();
+}
+
+/* SLIDESHOW */
+function startSlideshow(){
+  stopSlideshow();
+  slideshowInterval = setInterval(()=>{
+    next();
+  },3500);
+}
+function stopSlideshow(){
+  if(slideshowInterval){
+    clearInterval(slideshowInterval);
+    slideshowInterval = null;
+  }
+}
+
+/* NEXT / PREV */
+function next(){
+  currentIndex = (currentIndex + 1) % photos.length;
+  viewerImg.src = photos[currentIndex].image;
+}
+function prev(){
+  currentIndex = (currentIndex - 1 + photos.length) % photos.length;
+  viewerImg.src = photos[currentIndex].image;
+}
+
+/* SWIPE */
+let startX=0;
+viewer.addEventListener('touchstart',e=>{
+  startX = e.touches[0].clientX;
+});
+viewer.addEventListener('touchend',e=>{
+  const endX = e.changedTouches[0].clientX;
+  if(startX - endX > 50) next();
+  if(endX - startX > 50) prev();
+});
+
+/* CLOSE */
+viewer.onclick = e=>{
+  if(e.target === viewer){
+    viewer.style.display='none';
+    stopSlideshow();
+  }
+};
+</script>
+
+</body>
+</html>
